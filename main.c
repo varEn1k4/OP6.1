@@ -12,18 +12,16 @@ int neededCalculations(float **a, float *b, float *x, unsigned short amount, flo
 
 
 int main(void) {
-    unsigned short amount = 0;
-    float epsilon = 0;
     char exitE = 0;
 
     printf("This is program for system of linear algebraic equation\n");
     printf("Your input must satisfy the conditions:\n");
     printf("1. Element a[i][i] do not equal 0\n");
-    printf("2. Module of a[i][i] must be greater than sum of all elements in a row [i] (except a[i][i])\n");
+    printf("2. Module of a[i][i] must be greater than module of sum of all elements in a row [i] (except a[i][i])\n");
 
     do {
-        amount = (unsigned short)isItValid("Enter number of equations (2-7): ", 2, 7);
-        epsilon = isItValid("Enter accuracy (epsilon): ", 1e-4f, 1.0f);
+        unsigned short amount = (unsigned short)isItValid("Enter number of equations (2-7): ", 2, 7);
+        float epsilon = isItValid("Enter accuracy (from 1e-1 to 1e-4): ", 1e-4f, 0.1f);
 
         float **matrix = allocationMatrix(amount);
         if (!matrix) {
@@ -56,7 +54,7 @@ int main(void) {
             printf("Converged in %d iterations\n", iterations);
             printf("Solution:\n");
             for (int i = 0; i < amount; i++) {
-                printf("x%d = %.5f\n", i+1, x[i]);
+                printf("x%d = %.4f\n", i+1, x[i]);
             }
         } else {
             printf("Did not converge\n");
@@ -73,7 +71,7 @@ int main(void) {
 
 
 float isItValid(char textOutput[], float min, float max) {
-    float number = 0;
+    float number = 0.f;
     char extra = 0;
     int validInput = 1;
     do {
@@ -117,7 +115,7 @@ float **allocationMatrix(unsigned short amount) {
 }
 
 float *allocationNumbers(unsigned short amount) {
-    return malloc(amount * sizeof(float));
+    return (malloc(amount * sizeof(float)));
 }
 
 void freeMatrix(float **matrix, unsigned short n) {
@@ -129,15 +127,17 @@ void freeMatrix(float **matrix, unsigned short n) {
 
 int neededCalculations(float **a, float *b, float *x, unsigned short amount, float epsilon) {
     float *xp = allocationNumbers(amount);
-    float *xCalc = allocationNumbers(amount);
-
-    if (!xp || !xCalc) {
-        free(xp);
-        free(xCalc);
+    if (xp == NULL) {
         return -1;
     }
 
-    int iteration = 1;
+    float *xCalc = allocationNumbers(amount);
+    if (xCalc == NULL) {
+        free(xp);
+        return -1;
+    }
+
+    int iteration = 0;
     int maxIterations = 10000;
 
     for (int i = 0; i < amount; i++) {
@@ -182,34 +182,34 @@ int neededCalculations(float **a, float *b, float *x, unsigned short amount, flo
     return -1;
 }
 
-
 void inputInRow(float **matrix, float *numbers, unsigned short rowNumber, unsigned short amount) {
     int isRowValid = 0;
+    printf("a[i][j]: max = 100; min = -100\n");
     do {
         float sum = 0.f;
 
         for (int j = 0; j < amount; j++) {
-            char symbols[10];
+            char symbols[10];//!
             sprintf(symbols, "a[%d][%d]: ", rowNumber+1, j+1);
             matrix[rowNumber][j] = isItValid(symbols, -100.f, 100.0f);
         }
-        char symbols[7];
+        char symbols[7];//!
         sprintf(symbols, "b[%d]: ", rowNumber+1);
         numbers[rowNumber] = isItValid(symbols, -100.f, 100.0f);
 
         if (fabsf(matrix[rowNumber][rowNumber]) < 1e-4) {
-            printf("Your number is too small or equal 0. Enter a new one\n");
+            printf("Your input have very small number or equal 0. Enter a new one\n");
             continue;
         }
 
         for (int j = 0; j < amount; j++) {
             if (j != rowNumber) {
-                sum += fabsf(matrix[rowNumber][j]);
+                sum += matrix[rowNumber][j];
             }
         }
 
-        if (fabsf(matrix[rowNumber][rowNumber]) < sum) {
-            printf("Your row doesn't satisfy the second condition\n");
+        if (fabsf(matrix[rowNumber][rowNumber]) < fabsf(sum)) {
+            printf("Your row doesn't satisfy the second condition. Enter a new one row\n");
             continue;
         }
         isRowValid = 1;
